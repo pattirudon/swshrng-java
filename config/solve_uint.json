@@ -1,0 +1,32 @@
+{
+    "primary": {
+        "ivs": {
+            "h": 28,
+            "a": 27,
+            "b": 7,
+            "c": 4,
+            "d": 9,
+            "s": 27
+        },
+        "nature": "bold",
+        "frame": {
+            "startInclusive": 43,
+            "endExclusive": 44
+        }
+    },
+    "secondary": {
+        "ivs": {
+            "h": 30,
+            "a": 17,
+            "b": 29,
+            "c": 6,
+            "d": 4,
+            "s": 28
+        },
+        "nature": "impish",
+        "frame": {
+            "startInclusive": 0,
+            "endExclusive": 44
+        }
+    }
+}
