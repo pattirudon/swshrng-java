@@ -19,6 +19,6 @@ public class OverworldPokemon extends Pokemon {
     @Override
     public String toString() {
         String f = "nature=%s, ability=%d, mark=%s, localseed=%08x, ec=%08x, pid=%08x, ivs=%s";
-        return String.format(f, nature, ability, mark, seedLocal, ec, pid, ivs);
+        return String.format(f, nature, ability, mark.isPresent() ? mark.get().name() : "", seedLocal, ec, pid, ivs);
     }
 }

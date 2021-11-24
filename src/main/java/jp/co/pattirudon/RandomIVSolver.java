@@ -2,7 +2,9 @@ package jp.co.pattirudon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -104,7 +106,7 @@ public class RandomIVSolver {
         List<Set<? extends Integer>> xorList = Arrays.stream(ivs)
                 .<Set<? extends Integer>>mapToObj(iv -> possibleXors(5, iv)).toList();
 
-        List<Integer> result = new ArrayList<>();
+        Set<Integer> result = new TreeSet<>();
 
         for (List<Integer> xors : IterTools.<Integer>cartesianProduct(xorList)) {
             int[] y = new int[ivs.length];
@@ -122,7 +124,7 @@ public class RandomIVSolver {
                 }
             }
         }
-        return result;
+        return new ArrayList<Integer>(result);
     }
 
     public static int[] _linearUInts(long seed0, long seed1, Set<Integer> indices) {
@@ -157,6 +159,12 @@ public class RandomIVSolver {
 
     public static void list(RandomIVSolverConfig config, Logger logger) {
         int[] ivs = { config.ivs.h, config.ivs.a, config.ivs.b, config.ivs.c, config.ivs.d, config.ivs.s };
+        String[] labels = { "h", "a", "b", "c", "d", "s" };
+        Map<String, Integer> ivMap = new LinkedHashMap<>(ivs.length);
+        for (int i = 0; i < ivs.length; i++) {
+            ivMap.put(labels[i], ivs[i]);
+        }
+        logger.config(String.format("Finding 32-bit seed(s) for IVs: %s", ivMap));
         List<Integer> seeds = solve(ivs);
         for (int i = 0; i < seeds.size(); i++) {
             int seed = seeds.get(i);

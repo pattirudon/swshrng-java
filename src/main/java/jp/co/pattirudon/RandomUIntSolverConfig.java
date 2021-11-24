@@ -1,8 +1,5 @@
 package jp.co.pattirudon;
 
-import java.util.List;
-import java.util.stream.IntStream;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jp.co.pattirudon.pokemon.Nature;
@@ -12,14 +9,8 @@ public class RandomUIntSolverConfig {
     public UIntConfig primary, secondary;
 
     public static class UIntConfig {
-        public int[] uints;
-
-        @JsonProperty("uints")
-        public void setUint(List<String> s) {
-            List<Integer> t = s.stream().map(x -> Integer.parseUnsignedInt(x, 16)).toList();
-            IntStream r = IntStream.range(0, t.size()).map(i -> t.get(i));
-            this.uints = r.sorted().distinct().toArray();
-        }
+        @JsonProperty("ivs")
+        public IVConfig ivs;
 
         public Nature nature;
 
@@ -31,13 +22,16 @@ public class RandomUIntSolverConfig {
             }
         }
 
-        @JsonProperty
-        public Integer frame;
-        @JsonProperty
-        public Integer frameStartInclusive, frameEndExclusive;
-
         private static String capitalize(final String line) {
             return Character.toUpperCase(line.charAt(0)) + line.substring(1);
+        }
+
+        @JsonProperty
+        public FrameConfig frame;
+
+        public static class FrameConfig {
+            @JsonProperty
+            public int startInclusive, endExclusive;
         }
     }
 }

@@ -14,10 +14,9 @@ public class MatrixKernel extends Kernel {
     final int[] baseLinear;
     final int s0Start, s1Start;
     final int[] found;
-    final long[] foundBaseSeed;
 
     public MatrixKernel(long[] nullspace, long[][] j, long[][] h, int[] uintsSecondary, int indexEndSecondaryExclusive,
-            int[] baseLinear, int s0Start, int s1Start, int[] found, long[] foundSeed) {
+            int[] baseLinear, int s0Start, int s1Start, int[] found) {
         this.nullspace = nullspace;
         J = j;
         H = h;
@@ -27,7 +26,6 @@ public class MatrixKernel extends Kernel {
         this.s0Start = s0Start;
         this.s1Start = s1Start;
         this.found = found;
-        this.foundBaseSeed = foundSeed;
     }
 
     @Override
@@ -65,7 +63,6 @@ public class MatrixKernel extends Kernel {
                 int uint = (int) s0 + (int) s1;
                 if (binarySearch(uintsSecondary, 0, uintsSecondary.length, uint)) {
                     found[g] = 1;
-                    foundBaseSeed[g] = x;
                 }
                 s1 ^= s0;
                 s0 = rotl(s0, 24) ^ s1 ^ (s1 << 16);

@@ -29,7 +29,7 @@ public class VerboseLongMatrix extends LongMatrix {
     }
 
     public long multiplyLeft(int[] vector) {
-        long result = 0;
+        long result = 0L;
         for (int i = 0; i < cells; i++) {
             result ^= leftMultiplied[i][vector[i]];
         }

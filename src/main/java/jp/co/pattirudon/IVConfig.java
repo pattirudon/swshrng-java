@@ -2,7 +2,7 @@ package jp.co.pattirudon;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class RandomIVSolverConfig {
+public class IVConfig {
     @JsonProperty
-    public IVConfig ivs;
+    public int h, a, b, c, d, s;
 }
