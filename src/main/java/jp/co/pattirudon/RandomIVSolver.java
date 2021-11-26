@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import jp.co.pattirudon.config.RandomIVSolverConfig;
 import jp.co.pattirudon.matrices.BinaryMatrix;
 import jp.co.pattirudon.matrices.IntMatrix;
 import jp.co.pattirudon.matrices.LongMatrix;

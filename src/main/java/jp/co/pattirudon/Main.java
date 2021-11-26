@@ -15,6 +15,9 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jp.co.pattirudon.config.ListMakerConfig;
+import jp.co.pattirudon.config.RandomIVSolverConfig;
+import jp.co.pattirudon.config.RandomUIntSolverConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -38,6 +41,10 @@ public class Main implements Callable<Integer> {
                 "solve-uint" }, required = true, description = "Search for 64-bit seeds of the global xoroshiro. "
                         + "In game generated two unsigned integers are required.")
         boolean uintSolve;
+        @Option(names = {
+                "list" }, required = true, description = "Output information of pokemons possibly generated in the overworld."
+                        + "A 64-bit seed is required.")
+        boolean list;
     }
 
     public static void main(String[] args) {
@@ -57,6 +64,9 @@ public class Main implements Callable<Integer> {
         } else if (actions.uintSolve) {
             RandomUIntSolverConfig config = mapper.readValue(is, RandomUIntSolverConfig.class);
             RandomUIntSolver.list(config, logger);
+        } else if (actions.list) {
+            ListMakerConfig config = mapper.readValue(is, ListMakerConfig.class);
+            ListMaker.list(config, logger);
         }
         long end = System.currentTimeMillis();
         logger.config("Finish. [%d ms]".formatted(end - start));

@@ -3,6 +3,7 @@ package jp.co.pattirudon.matrices;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.LongFunction;
 
 public class LongMatrix {
     public final int rows;
@@ -162,6 +163,34 @@ public class LongMatrix {
 
     public VerboseLongMatrix verbose() {
         return new VerboseLongMatrix(Arrays.copyOf(mat, rows));
+    }
+
+    public static LongMatrix representPairwiseIntLinear(LongFunction<int[]> linear, int length) {
+        byte[][] t = new byte[64][32 * length];
+        for (int i = 0; i < 64; i++) {
+            long seed = 1L << i;
+            int[] a = linear.apply(seed);
+            for (int j = 0; j < a.length; j++) {
+                for (int k = 0; k < 32; k++) {
+                    t[i][j * 32 + k] = (byte) ((a[j] >>> k) & 1);
+                }
+            }
+        }
+        return BinaryMatrix.getInstance(64, 32 * length, t, false).transposed().longMatrix();
+    }
+
+    public static LongMatrix representLongLinear(LongFunction<long[]> f, int length) {
+        byte[][] t = new byte[64][64 * length];
+        for (int i = 0; i < 64; i++) {
+            long seed = 1L << i;
+            long[] a = f.apply(seed);
+            for (int j = 0; j < a.length; j++) {
+                for (int k = 0; k < 64; k++) {
+                    t[i][j * 64 + k] = (byte) ((a[j] >>> k) & 1);
+                }
+            }
+        }
+        return BinaryMatrix.getInstance(64, 64 * length, t, false).transposed().longMatrix();
     }
 
     /**

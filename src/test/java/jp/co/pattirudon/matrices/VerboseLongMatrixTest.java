@@ -13,7 +13,7 @@ public class VerboseLongMatrixTest {
     @Test
     public void testMultiplyLeft() {
         Set<Integer> indices = Set.of(3);
-        LongMatrix I = RandomUIntSolver.linearUIntMatrix(indices);
+        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(indices);
         assertEquals(I.enchelon().rank, 64);
         BinaryMatrix J = I.generalizedInverse();
         VerboseLongMatrix JT = J.transposed().longMatrix().verbose();

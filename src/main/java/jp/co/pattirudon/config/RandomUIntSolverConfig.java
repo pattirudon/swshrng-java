@@ -1,4 +1,4 @@
-package jp.co.pattirudon;
+package jp.co.pattirudon.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,10 +28,5 @@ public class RandomUIntSolverConfig {
 
         @JsonProperty
         public FrameConfig frame;
-
-        public static class FrameConfig {
-            @JsonProperty
-            public int startInclusive, endExclusive;
-        }
     }
 }

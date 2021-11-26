@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import jp.co.pattirudon.matrices.IntMatrix;
 import jp.co.pattirudon.matrices.LongMatrix;
+import jp.co.pattirudon.matrices.VerboseLongMatrix;
 import jp.co.pattirudon.matrices.IntMatrix.Enchelon;
 
 public class InGameSolverTest {
@@ -54,7 +55,7 @@ public class InGameSolverTest {
 
     public void _testLinearUIntMatrix() {
         Set<Integer> indices = Set.of(0, 1, 2, 3, 4, 5);
-        LongMatrix I = RandomUIntSolver.linearUIntMatrix(indices);
+        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(indices);
         long seed = 0x1566144cade952eaL;
         int[] expected = { 0xade952ea, 0xb9d4bd6b, 0xef538c8c, 0x4b946453, 0x06fd57c8, 0x752605f5, };
         byte[] y = I.multiplyRight(seed);
@@ -70,9 +71,9 @@ public class InGameSolverTest {
     }
 
     @Test
-    public void testLinearUIntMatrix() {
+    public void testRightLinearUIntMatrix() {
         Set<Integer> indices = Set.of(0, 1, 2, 3, 4, 5);
-        LongMatrix I = RandomUIntSolver.linearUIntMatrix(indices);
+        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(indices);
         long seed = 0x1566144cade952eaL;
         int[] expected = { 0xade952ea, 0x00000000, 0x151634fe, 0xacc28995, 0xfaf23a3b, 0x15a1b6b7, 0x58d5812e,
                 0x1341e57d, 0x01ad2f41, 0x07507889, 0x1074f1d5, 0x6552f420, };
@@ -86,5 +87,27 @@ public class InGameSolverTest {
             actual[j] = v;
         }
         assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testLeftLinearUIntMatrix() {
+        Set<Integer> indices = Set.of(1200);
+        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(indices);
+        LongMatrix J = I.generalizedInverse().longMatrix();
+        LongMatrix P = RandomUIntSolver.linearLeftUIntMatrix(indices);
+        LongMatrix Q = P.multiplyRight(J);
+        VerboseLongMatrix QT = Q.binary().transposed().longMatrix().verbose();
+        // long seed = 0xf92165f6f21bfee9L;
+        int[] rightLinear = { 0xebcb1c36, 0x59a5b1e1 };
+        int[] leftLinear = { 0x2f06c4e5, 0xdc7ae9b5 };
+        long expected = Integer.toUnsignedLong(leftLinear[0]) | (Integer.toUnsignedLong(leftLinear[1]) << 32);
+        int[] y = new int[4];
+        for (int k = 0; k < 2; k++) {
+            for (int l = 0; l < 2; l++) {
+                y[k * 2 + l] = (rightLinear[k] >>> (16 * l)) & 0xffff;
+            }
+        }
+        long z = QT.multiplyLeft(y);
+        assertEquals(expected, z);
     }
 }

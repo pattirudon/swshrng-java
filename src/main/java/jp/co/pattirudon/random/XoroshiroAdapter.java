@@ -14,8 +14,9 @@ public class XoroshiroAdapter extends Xoroshiro {
 
     final boolean isFishing = false;
     final boolean isWeatherActive = true;
-    boolean hasShinyCharm, hasMarkCharm;
-    int tsv;
+    final boolean hasShinyCharm = true;
+    final boolean hasMarkCharm = true;
+    final int tsv = 0;
 
     public XoroshiroAdapter(long seed) {
         super(seed);

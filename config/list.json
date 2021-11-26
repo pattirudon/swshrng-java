@@ -1,0 +1,8 @@
+{
+    "seed": "8c6356714ed033dc",
+    "tsv": 0,
+    "frame": {
+        "startInclusive": 3000,
+        "endExclusive": 4500
+    }
+}

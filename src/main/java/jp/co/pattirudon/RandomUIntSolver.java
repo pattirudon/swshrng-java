@@ -16,7 +16,7 @@ import java.util.stream.LongStream;
 import com.aparapi.Kernel;
 import com.aparapi.Range;
 
-import jp.co.pattirudon.matrices.BinaryMatrix;
+import jp.co.pattirudon.config.RandomUIntSolverConfig;
 import jp.co.pattirudon.matrices.LongMatrix;
 import jp.co.pattirudon.matrices.VerboseLongMatrix;
 import jp.co.pattirudon.pokemon.OverworldPokemon;
@@ -25,72 +25,62 @@ import jp.co.pattirudon.random.XoroshiroAdapter;
 
 public class RandomUIntSolver {
 
-    public static int[] linearUInts(long seed0, long seed1, Set<Integer> indices) {
-        Xoroshiro random = new Xoroshiro(seed0, seed1);
-        Set<Integer> _indices = new TreeSet<>(indices);
-        int[] linear = new int[_indices.size() * 2];
-        for (int i = 0, j = 0; !_indices.isEmpty(); i++) {
-            if (_indices.contains(i)) {
-                for (int k = 0; k < 2; k++) {
-                    int uint = (int) random.s[k];
-                    linear[j * 2 + k] = uint;
-                }
-                j++;
-                _indices.remove(i);
-            }
-            random.next();
-        }
-        return linear;
-    }
+    int indexPrimary, indexStartSecondaryInclusive, indexEndSecondaryExclusive;
+    long[][] J, H, P;
+    long[][][] S;
+    int rank;
+    long[] nullspace;
+    int[] baseRightState, baseLeftState;
+    long[] baseState;
 
-    public static LongMatrix linearUIntMatrix(Set<Integer> indices) {
-        byte[][] t = new byte[64][32 * indices.size() * 2];
-        for (int i = 0; i < 64; i++) {
-            long seed = 1L << i;
-            int[] linear = linearUInts(seed, 0L, indices);
-            for (int j = 0; j < linear.length; j++) {
-                for (int k = 0; k < 32; k++) {
-                    t[i][j * 32 + k] = (byte) ((linear[j] >>> k) & 1);
-                }
-            }
-        }
-        return BinaryMatrix.getInstance(64, 32 * indices.size() * 2, t, false).transposed().longMatrix();
-    }
+    public RandomUIntSolver(int indexPrimary, int indexStartSecondaryInclusive, int indexEndSecondaryExclusive) {
+        this.indexPrimary = indexPrimary;
+        this.indexStartSecondaryInclusive = indexStartSecondaryInclusive;
+        this.indexEndSecondaryExclusive = indexEndSecondaryExclusive;
 
-    public static LongStream solve(int indexPrimary, int indexEndSecondaryExclusive, int uintPrimary,
-            int[] uintsSecondary) {
-        int statePrimaryRangeWidth = 0x100_0000;
-        int statePrimaryRangeCount = 0x100;
-        LongStream ls = LongStream.range(0, statePrimaryRangeCount).flatMap(new LongFunction<LongStream>() {
-            @Override
-            public LongStream apply(long rangeIndex) {
-                int s0StartInclusive = statePrimaryRangeWidth * (int) rangeIndex;
-                int s0EndExclusive = s0StartInclusive + statePrimaryRangeWidth;
-                return solve(indexPrimary, indexEndSecondaryExclusive, uintPrimary, uintsSecondary, s0StartInclusive,
-                        s0EndExclusive);
-            }
-        });
-        return ls;
-    }
-
-    public static LongStream solve(int indexPrimary, int indexEndSecondaryExclusive, int uintPrimary,
-            int[] uintsSecondary, int s0StartInclusive, int s0EndExclusive) {
-        int[] baseLinear = RandomUIntSolver.linearUInts(0L, Xoroshiro.XOROSHIRO_CONST, Set.of(indexPrimary));
-        LongMatrix I = RandomUIntSolver.linearUIntMatrix(Set.of(indexPrimary));
+        int[] baseRightState = RandomUIntSolver.linearRightUInts(0L, Xoroshiro.XOROSHIRO_CONST, Set.of(indexPrimary));
+        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(Set.of(indexPrimary));
         LongMatrix J = I.generalizedInverse().longMatrix();
         LongMatrix H = I.multiplyRight(J).add(LongMatrix.ones());
         VerboseLongMatrix JT = J.binary().transposed().longMatrix().verbose();
         VerboseLongMatrix HT = H.binary().transposed().longMatrix().verbose();
         long[] nullspace = I.nullspace();
+        int rank = I.enchelon().rank;
+        this.baseRightState = baseRightState;
+        this.J = JT.leftMultiplied;
+        this.H = HT.leftMultiplied;
+        this.nullspace = nullspace;
+        this.rank = rank;
 
-        int statePrimaryRangeWidth = s0EndExclusive - s0StartInclusive;
+        int[] baseLeftState = RandomUIntSolver.linearLeftUInts(0L, Xoroshiro.XOROSHIRO_CONST,
+                Set.of(indexPrimary));
+        this.baseLeftState = baseLeftState;
+        LongMatrix P = RandomUIntSolver.linearLeftUIntMatrix(Set.of(indexPrimary));
+        VerboseLongMatrix PT = P.binary().transposed().longMatrix().verbose();
+        this.P = PT.leftMultiplied;
 
-        int s0Start = s0StartInclusive;
+        long[] baseState = RandomUIntSolver.state(0L, Xoroshiro.XOROSHIRO_CONST, Set.of(indexStartSecondaryInclusive));
+        this.baseState = baseState;
+        this.S = new long[2][][];
+        LongMatrix S = RandomUIntSolver.stateMatrix(Set.of(indexPrimary));
+        for (int k = 0; k < 2; k++) {
+            LongMatrix halvedS = LongMatrix.getInstance(Arrays.copyOfRange(S.mat, k * 64, (k + 1) * 64), false);
+            VerboseLongMatrix halvedST = halvedS.binary().transposed().longMatrix().verbose();
+            this.S[k] = halvedST.leftMultiplied;
+        }
+    }
+
+    public LongStream solve(int uintPrimary, int[] uintsSecondary, int rightS0StartInclusive, int rightS0EndExclusive) {
+
+        int statePrimaryRangeWidth = rightS0EndExclusive - rightS0StartInclusive;
+
+        int s0Start = rightS0StartInclusive;
         int s1Start = uintPrimary - s0Start;
 
         int[] found = new int[statePrimaryRangeWidth];
-        Kernel kernel = new MatrixKernel(nullspace, JT.leftMultiplied, HT.leftMultiplied, uintsSecondary,
-                indexEndSecondaryExclusive, baseLinear, s0Start, s1Start, found);
+        Kernel kernel = new MatrixKernel(nullspace, J, rank, H, P, uintsSecondary, indexPrimary,
+                indexStartSecondaryInclusive, indexEndSecondaryExclusive, baseLeftState, baseRightState, s0Start, s1Start,
+                found);
         kernel.execute(Range.create(statePrimaryRangeWidth));
         kernel.dispose();
 
@@ -99,16 +89,16 @@ public class RandomUIntSolver {
             public boolean test(int gid) {
                 return found[gid] == 1;
             }
-        }).sequential();
+        });
         LongStream foundBaseSeeds = foundGids.mapToLong(new IntToLongFunction() {
             @Override
             public long applyAsLong(int g) {
-                int[] stap = new int[2];
-                stap[0] = s0Start + g;
-                stap[1] = s1Start - g;
+                int[] rightState = new int[2];
+                rightState[0] = s0Start + g;
+                rightState[1] = s1Start - g;
                 int[] y = new int[2];
                 for (int i = 0; i < 2; i++) {
-                    y[i] = baseLinear[i] ^ stap[i];
+                    y[i] = baseRightState[i] ^ rightState[i];
                 }
                 int[] yShort = new int[2 * 2];
                 for (int i = 0; i < 2; i++) {
@@ -116,7 +106,10 @@ public class RandomUIntSolver {
                         yShort[i * 2 + k] = (y[i] >>> (16 * k)) & 0xffff;
                     }
                 }
-                long x = JT.multiplyLeft(yShort);
+                long x = 0;
+                for (int i = 0; i < yShort.length; i++) {
+                    x ^= J[i][yShort[i]];
+                }
                 return x;
             }
         });
@@ -130,7 +123,10 @@ public class RandomUIntSolver {
             public boolean test(long seed) {
                 Xoroshiro random = new Xoroshiro(seed);
                 boolean match = false;
-                for (int l = 0; l < indexEndSecondaryExclusive; l++) {
+                for (int l = 0; l < indexStartSecondaryInclusive; l++) {
+                    random.nextInt();
+                }
+                for (int l = indexStartSecondaryInclusive; l < indexEndSecondaryExclusive; l++) {
                     int uint = random.nextInt();
                     if (Arrays.binarySearch(uintsSecondary, uint) >= 0) {
                         match = true;
@@ -140,12 +136,78 @@ public class RandomUIntSolver {
                 return match;
             };
         });
-        return foundSeeds;
+        return foundSeeds.sequential();
+    }
+
+    public LongStream solve(int uintPrimary, int[] uintsSecondary) {
+        int statePrimaryRangeWidth = 0x100_0000;
+        int statePrimaryRangeCount = 0x100;
+        LongStream ls = LongStream.range(0, statePrimaryRangeCount).flatMap(new LongFunction<LongStream>() {
+            @Override
+            public LongStream apply(long rangeIndex) {
+                int s0StartInclusive = statePrimaryRangeWidth * (int) rangeIndex;
+                int s0EndExclusive = s0StartInclusive + statePrimaryRangeWidth;
+                return solve(uintPrimary, uintsSecondary, s0StartInclusive, s0EndExclusive);
+            }
+        });
+        return ls;
+    }
+
+    public static long[] state(long seed0, long seed1, Set<Integer> indices) {
+        Xoroshiro random = new Xoroshiro(seed0, seed1);
+        Set<Integer> _indices = new TreeSet<>(indices);
+        long[] linear = new long[_indices.size() * 2];
+        for (int i = 0, j = 0; !_indices.isEmpty(); i++) {
+            if (_indices.contains(i)) {
+                for (int k = 0; k < 2; k++) {
+                    long u = random.s[k];
+                    linear[j * 2 + k] = u;
+                }
+                j++;
+                _indices.remove(i);
+            }
+            random.next();
+        }
+        return linear;
+    }
+
+    public static LongMatrix stateMatrix(Set<Integer> indices) {
+        LongFunction<long[]> l = seed -> state(seed, 0L, indices);
+        return LongMatrix.representLongLinear(l, indices.size() * 2);
+    }
+
+    public static int[] linearRightUInts(long seed0, long seed1, Set<Integer> indices) {
+        long[] l = state(seed0, seed1, indices);
+        int[] k = new int[l.length];
+        for (int i = 0; i < l.length; i++) {
+            k[i] = (int) l[i] & 0xffffffff;
+        }
+        return k;
+    }
+
+    public static LongMatrix linearRightUIntMatrix(Set<Integer> indices) {
+        LongFunction<int[]> l = seed -> linearRightUInts(seed, 0L, indices);
+        return LongMatrix.representPairwiseIntLinear(l, indices.size() * 2);
+    }
+
+    public static int[] linearLeftUInts(long seed0, long seed1, Set<Integer> indices) {
+        long[] l = state(seed0, seed1, indices);
+        int[] k = new int[l.length];
+        for (int i = 0; i < l.length; i++) {
+            k[i] = (int) (l[i] >>> 32);
+        }
+        return k;
+    }
+
+    public static LongMatrix linearLeftUIntMatrix(Set<Integer> indices) {
+        LongFunction<int[]> l = seed -> linearLeftUInts(seed, 0L, indices);
+        return LongMatrix.representPairwiseIntLinear(l, indices.size() * 2);
     }
 
     public static void list(RandomUIntSolverConfig config, Logger logger) {
         int[] indicesPrimary = IntStream.range(config.primary.frame.startInclusive, config.primary.frame.endExclusive)
                 .toArray();
+        int indexStartSecondaryInclusive = config.secondary.frame.startInclusive;
         int indexEndSecondaryExclusive = config.secondary.frame.endExclusive;
 
         int[] ivsPrimary = { config.primary.ivs.h, config.primary.ivs.a, config.primary.ivs.b, config.primary.ivs.c,
@@ -163,7 +225,9 @@ public class RandomUIntSolver {
                 int indexPrimary = indicesPrimary[h];
                 for (int i = 0; i < uintsPrimary.length; i++) {
                     int uintPrimary = uintsPrimary[i];
-                    LongStream ls = solve(indexPrimary, indexEndSecondaryExclusive, uintPrimary, uintsSecondary);
+                    RandomUIntSolver solver = new RandomUIntSolver(indexPrimary, indexStartSecondaryInclusive,
+                            indexEndSecondaryExclusive);
+                    LongStream ls = solver.solve(uintPrimary, uintsSecondary);
                     ls.forEach(new LongConsumer() {
                         @Override
                         public void accept(long seed) {
