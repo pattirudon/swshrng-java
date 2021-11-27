@@ -6,7 +6,7 @@ public class MatrixKernel extends Kernel {
 
     final long[][] nullimage;
     final long[][] H;
-    final long[][] S0, S1;
+    final long[][][] S;
     final int[] uintsSecondary;
     final int indexStartSecondaryInclusive, indexEndSecondaryExclusive;
     final int[] baseRightStatePrimary;
@@ -14,12 +14,10 @@ public class MatrixKernel extends Kernel {
     final int[] found;
 
     public MatrixKernel(long[][] nullimage, long[][] h, long[][][] s, int[] uintsSecondary,
-            int indexStartSecondaryInclusive, int indexEndSecondaryExclusive, int[] baseRightStatePrimary, int s0Start,
-            int s1Start, int[] found) {
+            int indexStartSecondaryInclusive, int indexEndSecondaryExclusive, int[] baseRightStatePrimary,int s0Start, int s1Start, int[] found) {
         this.nullimage = nullimage;
         this.H = h;
-        this.S0 = s[0];
-        this.S1 = s[1];
+        this.S = s;
         this.uintsSecondary = uintsSecondary;
         this.indexStartSecondaryInclusive = indexStartSecondaryInclusive;
         this.indexEndSecondaryExclusive = indexEndSecondaryExclusive;
@@ -54,17 +52,15 @@ public class MatrixKernel extends Kernel {
                 return;
             }
         }
-        long z0 = 0L;
-        for (int j = 0; j < 4; j++) {
-            z0 ^= S0[j][yShort[j]];
-        }
-        long z1 = 0L;
-        for (int j = 0; j < 4; j++) {
-            z1 ^= S1[j][yShort[j]];
+        long[] z = new long[2];
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 4; j++) {
+                z[i] ^= S[i][j][yShort[j]];
+            }
         }
         for (int i = 0; i < nullimage.length; i++) {
-            long s0 = z0 ^ nullimage[i][0];
-            long s1 = z1 ^ nullimage[i][1];
+            long s0 = z[0] ^ nullimage[i][0];
+            long s1 = z[1] ^ nullimage[i][1];
             for (int j = indexStartSecondaryInclusive; j < indexEndSecondaryExclusive; j++) {
                 int uint = (int) s0 + (int) s1;
                 if (binarySearch(uintsSecondary, 0, uintsSecondary.length, uint)) {

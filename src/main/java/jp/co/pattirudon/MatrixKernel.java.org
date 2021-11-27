@@ -4,26 +4,31 @@ import com.aparapi.Kernel;
 
 public class MatrixKernel extends Kernel {
 
-    final long[][] nullimage;
+    final long[] nullspace;
+    final long[][] J;
+    final int rank;
     final long[][] H;
-    final long[][] S0, S1;
+    final long[][] P;
     final int[] uintsSecondary;
-    final int indexStartSecondaryInclusive, indexEndSecondaryExclusive;
-    final int[] baseRightStatePrimary;
+    final int indexPrimary, indexStartSecondaryInclusive, indexEndSecondaryExclusive;
+    final int[] baseLeftState, baseRightState;
     final int s0Start, s1Start;
     final int[] found;
 
-    public MatrixKernel(long[][] nullimage, long[][] h, long[][][] s, int[] uintsSecondary,
-            int indexStartSecondaryInclusive, int indexEndSecondaryExclusive, int[] baseRightStatePrimary, int s0Start,
-            int s1Start, int[] found) {
-        this.nullimage = nullimage;
-        this.H = h;
-        this.S0 = s[0];
-        this.S1 = s[1];
+    public MatrixKernel(long[] nullspace, long[][] j, int rank, long[][] h, long[][] p, int[] uintsSecondary,
+            int indexPrimary, int indexStartSecondaryInclusive, int indexEndSecondaryExclusive, int[] baseLeftState,
+            int[] baseRightState, int s0Start, int s1Start, int[] found) {
+        this.nullspace = nullspace;
+        J = j;
+        this.rank = rank;
+        H = h;
+        P = p;
         this.uintsSecondary = uintsSecondary;
+        this.indexPrimary = indexPrimary;
         this.indexStartSecondaryInclusive = indexStartSecondaryInclusive;
         this.indexEndSecondaryExclusive = indexEndSecondaryExclusive;
-        this.baseRightStatePrimary = baseRightStatePrimary;
+        this.baseLeftState = baseLeftState;
+        this.baseRightState = baseRightState;
         this.s0Start = s0Start;
         this.s1Start = s1Start;
         this.found = found;
@@ -37,7 +42,7 @@ public class MatrixKernel extends Kernel {
         rightState[1] = s1Start - g;
         int[] y = new int[2];
         for (int i = 0; i < 2; i++) {
-            y[i] = baseRightStatePrimary[i] ^ rightState[i];
+            y[i] = baseRightState[i] ^ rightState[i];
         }
         int[] yShort = new int[2 * 2];
         for (int i = 0; i < 2; i++) {
@@ -45,7 +50,7 @@ public class MatrixKernel extends Kernel {
                 yShort[i * 2 + k] = (y[i] >>> (16 * k)) & 0xffff;
             }
         }
-        if (nullimage.length > 1) {
+        if (rank < 64) {
             long syndrome = 0;
             for (int i = 0; i < 4; i++) {
                 syndrome ^= H[i][yShort[i]];
@@ -54,17 +59,33 @@ public class MatrixKernel extends Kernel {
                 return;
             }
         }
-        long z0 = 0L;
-        for (int j = 0; j < 4; j++) {
-            z0 ^= S0[j][yShort[j]];
+        long x = 0;
+        for (int i = 0; i < 4; i++) {
+            x ^= J[i][yShort[i]];
         }
-        long z1 = 0L;
-        for (int j = 0; j < 4; j++) {
-            z1 ^= S1[j][yShort[j]];
-        }
-        for (int i = 0; i < nullimage.length; i++) {
-            long s0 = z0 ^ nullimage[i][0];
-            long s1 = z1 ^ nullimage[i][1];
+        for (int i = 0; i < nullspace.length; i++) {
+            long seed = nullspace[i] ^ x;
+            int[] seedShort = new int[4];
+            for (int j = 0; j < 4; j++) {
+                seedShort[j] = (int) (seed >>> (j * 16)) & 0xffff;
+            }
+            long z = 0;
+            for (int j = 0; j < 4; j++) {
+                z ^= P[j][seedShort[j]];
+            }
+            int[] leftState = new int[2];
+            for (int j = 0; j < 2; j++) {
+                leftState[j] = baseLeftState[j] ^ (int) (z >>> (32 * j));
+            }
+            // long s0 = (Integer.toUnsignedLong(leftState[0]) << 32) | Integer.toUnsignedLong(rightState[0]);
+            // long s1 = (Integer.toUnsignedLong(leftState[1]) << 32) | Integer.toUnsignedLong(rightState[1]);
+            long s0 = ((leftState[0] & 0xffffffffL) << 32) | (rightState[0] & 0xffffffffL);
+            long s1 = ((leftState[1] & 0xffffffffL) << 32) | (rightState[1] & 0xffffffffL);
+            for (int j = indexPrimary; j < indexStartSecondaryInclusive; j++) {
+                s1 ^= s0;
+                s0 = rotl(s0, 24) ^ s1 ^ (s1 << 16);
+                s1 = rotl(s1, 37);
+            }
             for (int j = indexStartSecondaryInclusive; j < indexEndSecondaryExclusive; j++) {
                 int uint = (int) s0 + (int) s1;
                 if (binarySearch(uintsSecondary, 0, uintsSecondary.length, uint)) {

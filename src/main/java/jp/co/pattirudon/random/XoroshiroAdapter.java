@@ -8,6 +8,7 @@ import jp.co.pattirudon.pokemon.Mark;
 import jp.co.pattirudon.pokemon.Nature;
 import jp.co.pattirudon.pokemon.NonPersonalityMark;
 import jp.co.pattirudon.pokemon.OverworldPokemon;
+import jp.co.pattirudon.pokemon.PersonalityMark;
 import jp.co.pattirudon.pokemon.Pokemon;
 
 public class XoroshiroAdapter extends Xoroshiro {
@@ -58,6 +59,10 @@ public class XoroshiroAdapter extends Xoroshiro {
             if (rare == 0) {
                 result = Optional.<Mark>of(NonPersonalityMark.Rare);
             } else if (personality == 0) {
+                int len = PersonalityMark.values().length;
+                int id = (int) random.random(len);
+                Mark mark = PersonalityMark.valueOf(id);
+                result = Optional.<Mark>of(mark);
             } else if (uncommon == 0) {
                 result = Optional.<Mark>of(NonPersonalityMark.Uncommon);
             } else if (weather == 0 && isWeatherActive) {
