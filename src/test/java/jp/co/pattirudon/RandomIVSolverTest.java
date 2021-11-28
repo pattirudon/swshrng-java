@@ -10,9 +10,9 @@ import java.util.TreeSet;
 import org.junit.Test;
 
 import jp.co.pattirudon.matrices.IntMatrix;
+import jp.co.pattirudon.matrices.IntMatrix.Enchelon;
 import jp.co.pattirudon.matrices.LongMatrix;
 import jp.co.pattirudon.matrices.VerboseLongMatrix;
-import jp.co.pattirudon.matrices.IntMatrix.Enchelon;
 
 public class RandomIVSolverTest {
     @Test
@@ -51,23 +51,6 @@ public class RandomIVSolverTest {
         Set<Integer> seedSet = new TreeSet<>(seeds);
         Set<Integer> expected = Set.of(0xd0f5f22e, 0xa78ab9f4, 0xe3ff170f, 0xbb528cf6);
         assertEquals(seedSet, expected);
-    }
-
-    public void _testLinearUIntMatrix() {
-        Set<Integer> indices = Set.of(0, 1, 2, 3, 4, 5);
-        LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(indices);
-        long seed = 0x1566144cade952eaL;
-        int[] expected = { 0xade952ea, 0xb9d4bd6b, 0xef538c8c, 0x4b946453, 0x06fd57c8, 0x752605f5, };
-        byte[] y = I.multiplyRight(seed);
-        int[] actual = new int[indices.size()];
-        for (int j = 0; j < actual.length; j++) {
-            int v = 0;
-            for (int k = 0; k < 32; k++) {
-                v |= y[j * 32 + k] << k;
-            }
-            actual[j] = v;
-        }
-        assertArrayEquals(expected, actual);
     }
 
     @Test

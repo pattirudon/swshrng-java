@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import org.junit.Test;
 
+import jp.co.pattirudon.pokemon.Mark;
+import jp.co.pattirudon.pokemon.Nature;
 import jp.co.pattirudon.pokemon.OverworldPokemon;
 import jp.co.pattirudon.pokemon.Pokemon;
 
@@ -36,8 +39,17 @@ public class XoroshiroAdapterTest {
         long seed = 0x4804dc0a68cc0c40L;
         XoroshiroAdapter random = new XoroshiroAdapter(seed, OptionalInt.empty(), false, false, false, false);
         for (int i = 0; i < 24; i++) {
-            OverworldPokemon p = random.sampleOverworld();
-            System.out.println(p);
+            random.next();
         }
+        OverworldPokemon p = random.sampleOverworld();
+        String[] labels = { "h", "a", "b", "c", "d", "s" };
+        int[] ivs_array = { 7, 5, 12, 16, 0, 19 };
+        Map<String, Integer> ivs = new LinkedHashMap<>();
+        for (int i = 0; i < labels.length; i++) {
+            ivs.put(labels[i], ivs_array[i]);
+        }
+        OverworldPokemon q = new OverworldPokemon(0x84e27412, 0xa77fde6d, 0xfe8c4cfd, ivs, Nature.Careful, 1,
+                Optional.<Mark>empty());
+        assertEquals(q, p);
     }
 }

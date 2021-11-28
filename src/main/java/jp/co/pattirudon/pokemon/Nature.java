@@ -11,7 +11,7 @@ public enum Nature {
         this.id = id;
     }
 
-    public static Nature valueOf(int id){
+    public static Nature valueOf(int id) {
         return Nature.values()[id];
     }
 }

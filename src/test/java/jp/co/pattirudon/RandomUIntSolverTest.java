@@ -25,7 +25,6 @@ public class RandomUIntSolverTest {
         assertArrayEquals(new long[] { 0x8ecfa20fac133deeL }, a);
     }
 
-    @Test
     public void benchmarkSolve() { // 23.6s
         int indexPrimary = 15;
         int indexStartSecondaryInclusive = 23;
@@ -39,7 +38,6 @@ public class RandomUIntSolverTest {
         s.forEach(q -> System.out.printf("%016x%n", q));
     }
 
-    @Test
     public void benchmarkSolve_1() { // 49.9s
         // long seed = 0xb75206104ffd42b1L;
         int indexPrimary = 5000;
