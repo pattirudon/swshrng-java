@@ -25,7 +25,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(version = "1.0", description = "Overworld prng seed determination tool for pokemon sword/shield", mixinStandardHelpOptions = true)
+@Command(version = "1.0", description = "Overworld prng seed determination tool for pokemon sword/shield", mixinStandardHelpOptions = true, sortOptions = false)
 public class Main implements Callable<Integer> {
     @ArgGroup(heading = "Actions:\n", exclusive = true, multiplicity = "1")
     Actions actions;
@@ -34,16 +34,16 @@ public class Main implements Callable<Integer> {
     Path configFilePath;
 
     static class Actions {
-        @Option(names = {
+        @Option(order = 0, names = {
                 "local" }, required = true, description = "Search for 32-bit seeds of the local xoroshiro. "
                         + "In game generated ivs of a single pokemon are required.")
         boolean local;
-        @Option(names = {
+        @Option(order = 1, names = {
                 "global" }, required = true, description = "Search for 64-bit seeds of the global xoroshiro. "
                         + "In game generated ivs of two pokemons are required.")
         boolean global;
-        @Option(names = {
-                "list" }, required = true, description = "Output information of pokemons possibly generated in the overworld."
+        @Option(order = 2, names = {
+                "list" }, required = true, description = "Output information of pokemons possibly generated in the overworld. "
                         + "A 64-bit seed of the global xoroshiro is required.")
         boolean list;
     }
