@@ -31,7 +31,7 @@ public class MatrixKernelTest {
         LongMatrix I = RandomUIntSolver.linearRightUIntMatrix(Set.of(indices[0]));
         LongMatrix J = I.generalizedInverse().longMatrix();
         LongMatrix H = I.multiplyRight(J).add(LongMatrix.ones());
-        VerboseLongMatrix JT = J.binary().transposed().longMatrix().verbose();
+        // VerboseLongMatrix JT = J.binary().transposed().longMatrix().verbose();
         VerboseLongMatrix HT = H.binary().transposed().longMatrix().verbose();
         long[] nullspace = I.nullspace();
         long[][] nullimage = new long[nullspace.length][2];

@@ -14,7 +14,7 @@ import jp.co.pattirudon.matrices.LongMatrix;
 import jp.co.pattirudon.matrices.VerboseLongMatrix;
 import jp.co.pattirudon.matrices.IntMatrix.Enchelon;
 
-public class InGameSolverTest {
+public class RandomIVSolverTest {
     @Test
     public void testPossibleXors() {
         int summation = 0xaaaaaaaa;

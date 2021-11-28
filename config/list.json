@@ -1,8 +1,12 @@
 {
     "seed": "8c6356714ed033dc",
-    "tsv": 0,
+    "tsv": null,
+    "hasShinyCharm": true,
+    "hasMarkCharm": true,
+    "isWeatherActive": true,
+    "isFishing": false,
     "frame": {
-        "startInclusive": 3000,
-        "endExclusive": 4500
+        "startInclusive": 480,
+        "endExclusive": 520
     }
 }

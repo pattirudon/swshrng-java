@@ -226,7 +226,8 @@ public class RandomUIntSolver {
                         @Override
                         public void accept(long seed) {
                             int indexEnd = Math.max(indexPrimary, indexEndSecondaryExclusive);
-                            XoroshiroAdapter random = new XoroshiroAdapter(seed);
+                            XoroshiroAdapter random = new XoroshiroAdapter(seed, config.tsv, config.hasShinyCharm,
+                                    config.hasMarkCharm, config.isWeatherActive, config.isFishing);
                             for (int i = 0; i < indexEnd; i++) {
                                 OverworldPokemon p = random.sampleOverworld();
                                 if ((Arrays.binarySearch(uintsPrimary, p.seedLocal) >= 0

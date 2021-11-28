@@ -8,7 +8,8 @@ import jp.co.pattirudon.random.XoroshiroAdapter;
 
 public class ListMaker {
     public static void list(ListMakerConfig config, Logger logger) {
-        XoroshiroAdapter random = new XoroshiroAdapter(config.seed);
+        XoroshiroAdapter random = new XoroshiroAdapter(config.seed, config.tsv, config.hasShinyCharm,
+                config.hasMarkCharm, config.isWeatherActive, config.isFishing);
         for (int i = 0; i < config.frame.startInclusive; i++) {
             random.next();
         }

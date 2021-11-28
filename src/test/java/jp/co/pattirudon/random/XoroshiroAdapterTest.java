@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 
 import org.junit.Test;
 
@@ -15,7 +16,7 @@ public class XoroshiroAdapterTest {
     @Test
     public void testFixedState() {
         int seed = 0xef021648;
-        int tsv = 0;
+        OptionalInt tsv = OptionalInt.empty();
         boolean willShiny = false;
         Pokemon actual = XoroshiroAdapter.fixedState(seed, tsv, willShiny);
         int[] expected_iv_array = { 9, 26, 19, 29, 18, 8 };
@@ -33,7 +34,7 @@ public class XoroshiroAdapterTest {
     @Test
     public void testSampleOverworld() {
         long seed = 0x4804dc0a68cc0c40L;
-        XoroshiroAdapter random = new XoroshiroAdapter(seed);
+        XoroshiroAdapter random = new XoroshiroAdapter(seed, OptionalInt.empty(), false, false, false, false);
         for (int i = 0; i < 24; i++) {
             OverworldPokemon p = random.sampleOverworld();
             System.out.println(p);

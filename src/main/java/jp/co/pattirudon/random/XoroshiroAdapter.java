@@ -3,6 +3,7 @@ package jp.co.pattirudon.random;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import jp.co.pattirudon.pokemon.Mark;
 import jp.co.pattirudon.pokemon.Nature;
@@ -13,27 +14,35 @@ import jp.co.pattirudon.pokemon.Pokemon;
 
 public class XoroshiroAdapter extends Xoroshiro {
 
-    final boolean isFishing = false;
-    final boolean isWeatherActive = true;
-    final boolean hasShinyCharm = true;
-    final boolean hasMarkCharm = true;
-    final int tsv = 0;
+    final OptionalInt tsv;
+    final boolean hasShinyCharm;
+    final boolean hasMarkCharm;
+    final boolean isWeatherActive;
+    final boolean isFishing;
 
-    public XoroshiroAdapter(long seed) {
+    public XoroshiroAdapter(long seed, OptionalInt tsv, boolean hasShinyCharm, boolean hasMarkCharm,
+            boolean isWeatherActive, boolean isFishing) {
         super(seed);
+        this.tsv = tsv;
+        this.hasShinyCharm = hasShinyCharm;
+        this.hasMarkCharm = hasMarkCharm;
+        this.isWeatherActive = isWeatherActive;
+        this.isFishing = isFishing;
     }
 
-    public static Pokemon fixedState(int seed, int tsv, boolean willShiny) {
+    public static Pokemon fixedState(int seed, OptionalInt tsv, boolean willShiny) {
         Xoroshiro random = new Xoroshiro(Integer.toUnsignedLong(seed));
         int ec = random.nextInt();
         int pid = random.nextInt();
-        boolean isShinyPID = ((pid >>> 16) ^ (pid & 0xffff) ^ tsv) < 0x10;
-        if (willShiny && !isShinyPID) {
-            int left = tsv ^ (pid & 0xffff);
-            int right = pid & 0xffff;
-            pid = (left << 16) | right;
-        } else if (!willShiny && isShinyPID) {
-            pid ^= 0x10000000;
+        if (tsv.isPresent()) {
+            boolean isShinyPID = ((pid >>> 16) ^ (pid & 0xffff) ^ tsv.getAsInt()) < 0x10;
+            if (willShiny && !isShinyPID) {
+                int left = tsv.getAsInt() ^ (pid & 0xffff);
+                int right = pid & 0xffff;
+                pid = (left << 16) | right;
+            } else if (!willShiny && isShinyPID) {
+                pid ^= 0x10000000;
+            }
         }
         String[] labels = { "h", "a", "b", "c", "d", "s" };
         Map<String, Integer> ivs = new LinkedHashMap<>(labels.length);
@@ -82,22 +91,24 @@ public class XoroshiroAdapter extends Xoroshiro {
     public OverworldPokemon sampleOverworld() {
         Xoroshiro random = new Xoroshiro(this.s[0], this.s[1]);
         this.next();
-        {
-            random.random(100);
-        }
+        random.random(100);
         int rounds = hasShinyCharm ? 3 : 1;
         int mockPid = 0;
         boolean willShiny = false;
-        for (int i = 0; i < rounds; i++) {
-            mockPid = random.nextInt();
-            int x = (mockPid >>> 16) ^ (mockPid & 0xffff) ^ this.tsv;
-            willShiny = (x & 0xf) == x;
-            if (willShiny)
-                break;
+        if (this.tsv.isPresent()) {
+            for (int i = 0; i < rounds; i++) {
+                mockPid = random.nextInt();
+                int x = (mockPid >>> 16) ^ (mockPid & 0xffff) ^ this.tsv.getAsInt();
+                willShiny = (x & 0xf) == x;
+                if (willShiny)
+                    break;
+            }
+        } else {
+            for (int i = 0; i < rounds; i++) {
+                random.nextInt();
+            }
         }
-        {
-            random.random(2);
-        }
+        random.random(2);
         int i;
         i = (int) random.random(25);
         Nature nature = Nature.valueOf(i);

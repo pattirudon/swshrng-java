@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jp.co.pattirudon.config.ListMakerConfig;
@@ -34,16 +35,16 @@ public class Main implements Callable<Integer> {
 
     static class Actions {
         @Option(names = {
-                "solve-iv" }, required = true, description = "Search for 32-bit seeds of the local xoroshiro. "
-                        + "In game generated six IVs are required.")
-        boolean ivSolve;
+                "local" }, required = true, description = "Search for 32-bit seeds of the local xoroshiro. "
+                        + "In game generated ivs of a single pokemon are required.")
+        boolean local;
         @Option(names = {
-                "solve-uint" }, required = true, description = "Search for 64-bit seeds of the global xoroshiro. "
-                        + "In game generated two unsigned integers are required.")
-        boolean uintSolve;
+                "global" }, required = true, description = "Search for 64-bit seeds of the global xoroshiro. "
+                        + "In game generated ivs of two pokemons are required.")
+        boolean global;
         @Option(names = {
                 "list" }, required = true, description = "Output information of pokemons possibly generated in the overworld."
-                        + "A 64-bit seed is required.")
+                        + "A 64-bit seed of the global xoroshiro is required.")
         boolean list;
     }
 
@@ -58,10 +59,11 @@ public class Main implements Callable<Integer> {
         long start = System.currentTimeMillis();
         InputStream is = Files.newInputStream(configFilePath);
         ObjectMapper mapper = new ObjectMapper();
-        if (actions.ivSolve) {
+        mapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
+        if (actions.local) {
             RandomIVSolverConfig config = mapper.readValue(is, RandomIVSolverConfig.class);
             RandomIVSolver.list(config, logger);
-        } else if (actions.uintSolve) {
+        } else if (actions.global) {
             RandomUIntSolverConfig config = mapper.readValue(is, RandomUIntSolverConfig.class);
             RandomUIntSolver.list(config, logger);
         } else if (actions.list) {

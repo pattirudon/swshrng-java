@@ -1,4 +1,9 @@
 {
+    "tsv": null,
+    "hasShinyCharm": true,
+    "hasMarkCharm": true,
+    "isWeatherActive": true,
+    "isFishing": false,
     "primary": {
         "ivs": {
             "h": 30,
@@ -10,8 +15,8 @@
         },
         "nature": "impish",
         "frame": {
-            "startInclusive": 495,
-            "endExclusive": 496
+            "startInclusive": 470,
+            "endExclusive": 480
         }
     },
     "secondary": {
@@ -25,8 +30,8 @@
         },
         "nature": "bold",
         "frame": {
-            "startInclusive": 519,
-            "endExclusive": 531
+            "startInclusive": 495,
+            "endExclusive": 519
         }
     }
 }
